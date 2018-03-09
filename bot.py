@@ -26,9 +26,10 @@ async def on_member_join(mem):
         fsiz -= 1
         font=ImageFont.truetype("./Starfish.ttf", fsiz)
 
-    
-    x = round(37 * 1.25)
-    y = round(158 * 1.6)
+    tx, ty = draw.textsize(text, font=font)
+
+    x = 250 - tx//2
+    y = round(158 * 1.8) - ty//2
     #shadowcolor = (100, 100, 100)
     #shadowcolor = (255,255,255)
     fillcolor = (165, 214, 254)
@@ -59,9 +60,10 @@ async def whalecum(ctx, mem: discord.Member = None):
         fsiz -= 1
         font=ImageFont.truetype("./Starfish.ttf", fsiz)
 
-    
-    x = round(37 * 1.25)
-    y = round(158 * 1.6)
+    tx, ty = draw.textsize(text, font=font)
+
+    x = 250 - tx//2
+    y = round(158 * 1.8) - ty//2
     #shadowcolor = (100, 100, 100)
     #shadowcolor = (255,255,255)
     fillcolor = (165, 214, 254)
@@ -75,8 +77,9 @@ async def whalecum(ctx, mem: discord.Member = None):
     
     temp = BytesIO()
     im.save(temp, format="png")
+    #im.show()
     temp.seek(0)
-    await bot.upload(temp, content="Test", filename="welcome.png")
+    await bot.upload(temp, content="Give a popping welcome to " + mem.display_name + " :candy:", filename="welcome.png")
 
 
 bot.run(config.token)
