@@ -1,10 +1,15 @@
 import config
 from discord.ext import commands
-from PIL import Image, ImageDraw, ImageFont
+from PIL import Image, ImageDraw, ImageFont, ImageChops
 from io import BytesIO, StringIO
-import discord
+import discord, aiohttp
 
 bot = commands.Bot(command_prefix="-", description="Give new members a bubbly start to their experience!")
+
+
+def tint_image(image, tint_color):
+    return ImageChops.multiply(image, Image.new('RGBA', image.size, tint_color))
+
 
 @bot.event
 async def on_ready():
@@ -41,6 +46,57 @@ async def on_member_join(mem):
     draw.text((x-1, y+1), text, font=font, fill=shadowcolor, align=a)
     draw.text((x, y), text, font=font, fill=fillcolor, align=a)
     
+
+
+    avatar_im = None
+    url = mem.avatar_url
+    if not url:
+        url = mem.default_avatar_url
+
+    while True:
+        async with aiohttp.ClientSession(loop=bot.loop) as aiosession:
+            with aiohttp.Timeout(10):
+                async with aiosession.get(url) as resp:
+                    avatar_im = BytesIO(await resp.read())
+                    if avatar_im.getbuffer().nbytes > 0 or retries == 0:
+                        await aiosession.close()
+                        break
+                    retries -= 1
+                    print('0 nbytes image found. Retries left: {}'.format(retries+1))
+
+    ava_sqdim = 78
+    resize = (ava_sqdim, ava_sqdim)
+    avatar_im = Image.open(avatar_im).convert("RGBA")
+    avatar_im = avatar_im.resize(resize, Image.ANTIALIAS)
+    avatar_im.putalpha(avatar_im.split()[3])
+
+    is_square = False
+    if not is_square:
+        mask = Image.new('L', resize, 0)
+        maskDraw = ImageDraw.Draw(mask)
+        maskDraw.ellipse((0, 0) + resize, fill=255)
+        mask = mask.resize(avatar_im.size, Image.ANTIALIAS)
+        avatar_im.putalpha(mask)
+        
+    img_center_x = (im.width // 2)
+    img_center_y = (im.height // 2)
+
+    offset_x = 109
+    offset_y = 36
+
+    img_offset_x = img_center_x + offset_x
+    img_offset_y = img_center_y + offset_y
+    ava_right = img_offset_x + avatar_im.width//2
+    ava_bottom = img_offset_y + avatar_im.height//2
+    ava_left = img_offset_x - avatar_im.width//2
+    ava_top = img_offset_y - avatar_im.height//2
+    avatar_im = tint_image(avatar_im, (255, 255, 255, 80))
+    im.paste(avatar_im, box=(ava_left, ava_top, ava_right, ava_bottom), mask=avatar_im)
+
+
+
+
+
     temp = BytesIO()
     im.save(temp, format="png")
     temp.seek(0)
@@ -74,7 +130,52 @@ async def whalecum(ctx, mem: discord.Member = None):
     draw.text((x+1, y-1), text, font=font, fill=shadowcolor, align=a)
     draw.text((x-1, y+1), text, font=font, fill=shadowcolor, align=a)
     draw.text((x, y), text, font=font, fill=fillcolor, align=a)
-    
+    avatar_im = None
+    url = mem.avatar_url
+    if not url:
+        url = mem.default_avatar_url
+
+    while True:
+        async with aiohttp.ClientSession(loop=bot.loop) as aiosession:
+            with aiohttp.Timeout(10):
+                async with aiosession.get(url) as resp:
+                    avatar_im = BytesIO(await resp.read())
+                    if avatar_im.getbuffer().nbytes > 0 or retries == 0:
+                        await aiosession.close()
+                        break
+                    retries -= 1
+                    print('0 nbytes image found. Retries left: {}'.format(retries+1))
+
+    ava_sqdim = 78
+    resize = (ava_sqdim, ava_sqdim)
+    avatar_im = Image.open(avatar_im).convert("RGBA")
+    avatar_im = avatar_im.resize(resize, Image.ANTIALIAS)
+    avatar_im.putalpha(avatar_im.split()[3])
+
+    is_square = False
+    if not is_square:
+        mask = Image.new('L', resize, 0)
+        maskDraw = ImageDraw.Draw(mask)
+        maskDraw.ellipse((0, 0) + resize, fill=255)
+        mask = mask.resize(avatar_im.size, Image.ANTIALIAS)
+        avatar_im.putalpha(mask)
+        
+    img_center_x = (im.width // 2)
+    img_center_y = (im.height // 2)
+
+    offset_x = 109
+    offset_y = 36
+
+    img_offset_x = img_center_x + offset_x
+    img_offset_y = img_center_y + offset_y
+    ava_right = img_offset_x + avatar_im.width//2
+    ava_bottom = img_offset_y + avatar_im.height//2
+    ava_left = img_offset_x - avatar_im.width//2
+    ava_top = img_offset_y - avatar_im.height//2
+    avatar_im = tint_image(avatar_im, (255, 255, 255, 80))
+    im.paste(avatar_im, box=(ava_left, ava_top, ava_right, ava_bottom), mask=avatar_im)
+
+
     temp = BytesIO()
     im.save(temp, format="png")
     #im.show()
