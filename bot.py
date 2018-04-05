@@ -2,7 +2,7 @@ import config
 from discord.ext import commands
 from PIL import Image, ImageDraw, ImageFont, ImageChops
 from io import BytesIO, StringIO
-import discord, aiohttp
+import discord, aiohttp, datetime
 
 bot = commands.Bot(command_prefix="-", description="Give new members a bubbly start to their experience!")
 
@@ -10,6 +10,8 @@ bot = commands.Bot(command_prefix="-", description="Give new members a bubbly st
 def tint_image(image, tint_color):
     return ImageChops.multiply(image, Image.new('RGBA', image.size, tint_color))
 
+def tag(u):
+    return u.name + "#" + u.discriminator
 
 @bot.event
 async def on_ready():
@@ -17,6 +19,19 @@ async def on_ready():
     print(bot.user.name)
     print(bot.user.id)
     print("--------")
+
+@commands.command(pass_context=True)
+async def dump(ctx, vc:discord.Channel):
+    if vc.type != "voice":
+        return await bot.say("Please provide a voice channel, not a text channel.")
+    
+    mems = [m for m in vc.server.members if m.voice.voice_channel == vc ]
+    await bot.send_message(ctx.message.channel, embed=discord.Embed(
+        title=":book: Members currently in " + vc.name,
+        description="```" + "".join([tag(m) + "\n" for m in mems]) + "```",
+        colour=0x0a96de,
+        timestamp=datetime.datetime.now()
+    ))
 
 @bot.event
 async def on_member_join(mem):
