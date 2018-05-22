@@ -20,9 +20,10 @@ async def on_ready():
     print(bot.user.id)
     print("--------")
 
-@commands.command(pass_context=True)
-async def dump(ctx, vc:discord.Channel):
-    if vc.type != "voice":
+@bot.command(pass_context=True)
+async def dump(ctx, *, vc:discord.Channel):
+    if str(vc.type) != "voice":
+        print(type(vc.type))
         return await bot.say("Please provide a voice channel, not a text channel.")
     
     mems = [m for m in vc.server.members if m.voice.voice_channel == vc ]
